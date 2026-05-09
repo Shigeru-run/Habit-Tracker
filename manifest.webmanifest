@@ -1,0 +1,19 @@
+{
+  "name": "習慣トラッカー",
+  "short_name": "習慣",
+  "description": "毎日の習慣を記録するシンプルなトラッカー",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8ee",
+  "theme_color": "#fff4e0",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
