@@ -155,6 +155,7 @@ function render() {
   document.getElementById('encourage').textContent = encourageMessage();
   renderHabits();
   renderHistory();
+  renderHeatmap();
 }
 
 function renderHabits() {
@@ -238,6 +239,69 @@ function attachHabitGestures(el, id) {
     if (longPressFired) { longPressFired = false; return; }
     toggleHabit(id);
   });
+}
+
+function renderHeatmap() {
+  const container = document.getElementById('heatmap');
+  if (!container) return;
+  const WEEKS = 16;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const dow = today.getDay();
+  const startSunday = new Date(today);
+  startSunday.setDate(today.getDate() - dow - (WEEKS - 1) * 7);
+
+  const totalHabits = state.habits.length || 1;
+  let activeLast30 = 0;
+  let longestStreak = 0;
+  let currentRun = 0;
+
+  let grid = '';
+  for (let row = 0; row < 7; row++) {
+    let rowHtml = '';
+    for (let col = 0; col < WEEKS; col++) {
+      const d = new Date(startSunday);
+      d.setDate(startSunday.getDate() + col * 7 + row);
+      const k = dateKey(d);
+      const rec = state.records[k] || {};
+      const done = state.habits.filter(h => rec[h.id]).length;
+      const ratio = done / totalHabits;
+      const isFuture = d > today;
+      let cls = 'heat-cell';
+      if (isFuture) cls += ' future';
+      else if (done === 0) cls += ' lvl-0';
+      else if (ratio < 0.34) cls += ' lvl-1';
+      else if (ratio < 0.67) cls += ' lvl-2';
+      else if (ratio < 1) cls += ' lvl-3';
+      else cls += ' lvl-4';
+      const tip = `${k} ${done}/${totalHabits}`;
+      rowHtml += `<div class="${cls}" title="${tip}"></div>`;
+    }
+    grid += `<div class="heat-row">${rowHtml}</div>`;
+  }
+
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const k = dateKey(d);
+    const has = state.records[k] && Object.values(state.records[k]).some(Boolean);
+    if (i < 30 && has) activeLast30++;
+    if (has) {
+      currentRun++;
+      if (currentRun > longestStreak) longestStreak = currentRun;
+    } else {
+      currentRun = 0;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="heat-grid">${grid}</div>
+    <div class="heat-axis"><span>4ヶ月前</span><span>今日</span></div>
+    <div class="heat-stats">
+      <div><span class="label">過去30日</span><span class="value">${activeLast30}<span class="unit">日</span></span></div>
+      <div><span class="label">最長連続</span><span class="value">${longestStreak}<span class="unit">日</span></span></div>
+    </div>
+  `;
 }
 
 function openEditDialog(id) {
