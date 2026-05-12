@@ -17,6 +17,45 @@ const DEFAULT_STATE = {
 
 let state = loadState();
 let editingHabitId = null;
+let viewingDate = startOfToday();
+const MAX_BACKFILL_DAYS = 30;
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function viewingKey() { return dateKey(viewingDate); }
+function isViewingToday() { return viewingKey() === todayKey(); }
+
+function daysFromToday(d) {
+  const today = startOfToday();
+  return Math.round((today - d) / (1000*60*60*24));
+}
+
+function shiftViewing(delta) {
+  const next = new Date(viewingDate);
+  next.setDate(next.getDate() + delta);
+  const back = daysFromToday(next);
+  if (back < 0 || back > MAX_BACKFILL_DAYS) return;
+  viewingDate = next;
+  render();
+}
+
+function jumpToDate(d) {
+  const target = new Date(d);
+  target.setHours(0,0,0,0);
+  const back = daysFromToday(target);
+  if (back < 0 || back > MAX_BACKFILL_DAYS) return;
+  viewingDate = target;
+  render();
+}
+
+function jumpToToday() {
+  viewingDate = startOfToday();
+  render();
+}
 
 function loadState() {
   try {
@@ -47,7 +86,7 @@ function isHabitDone(habitId, dKey) {
 }
 
 function toggleHabit(habitId) {
-  const k = todayKey();
+  const k = viewingKey();
   if (!state.records[k]) state.records[k] = {};
   state.records[k][habitId] = !state.records[k][habitId];
   if (!state.records[k][habitId]) delete state.records[k][habitId];
@@ -107,13 +146,15 @@ function greetingByHour() {
 
 function encourageMessage() {
   const total = state.habits.length;
-  const todayDone = state.records[todayKey()]
-    ? Object.values(state.records[todayKey()]).filter(Boolean).length
+  const k = viewingKey();
+  const done = state.records[k]
+    ? Object.values(state.records[k]).filter(Boolean).length
     : 0;
+  const todayWord = isViewingToday() ? '今日' : 'この日';
   if (total === 0) return '最初の習慣を追加しよう ✨';
-  if (todayDone === 0) return '今日も少しずつ進もう 🌱';
-  if (todayDone < total) return `あと ${total - todayDone} つ。いい調子です 🌟`;
-  return '今日は完璧！素晴らしい一日 🎉';
+  if (done === 0) return `${todayWord}も少しずつ進もう 🌱`;
+  if (done < total) return `あと ${total - done} つ。いい調子です 🌟`;
+  return `${todayWord}は完璧！素晴らしい一日 🎉`;
 }
 
 function pickColor() {
@@ -148,7 +189,16 @@ function deleteHabit(id) {
 
 function render() {
   document.getElementById('greeting').textContent = greetingByHour();
-  document.getElementById('dateLabel').textContent = formatDateJP(new Date());
+
+  const back = daysFromToday(viewingDate);
+  const suffix = back === 0 ? '' : `（${back}日前）`;
+  document.getElementById('dateLabel').textContent = formatDateJP(viewingDate) + suffix;
+  document.getElementById('dateBack').disabled = back >= MAX_BACKFILL_DAYS;
+  document.getElementById('dateForward').disabled = back <= 0;
+  document.getElementById('dateToday').hidden = isViewingToday();
+  document.getElementById('habitListTitle').firstChild.textContent =
+    isViewingToday() ? '今日の習慣' : 'この日の記録';
+
   document.getElementById('streakValue').textContent = `${overallStreak()}日`;
   const days = daysUntilRetirement();
   document.getElementById('retireValue').textContent = days === null ? '設定 ▸' : `${days.toLocaleString()}日`;
@@ -160,10 +210,10 @@ function render() {
 
 function renderHabits() {
   const list = document.getElementById('habitList');
-  const todayK = todayKey();
+  const viewK = viewingKey();
   list.innerHTML = '';
   for (const h of state.habits) {
-    const done = isHabitDone(h.id, todayK);
+    const done = isHabitDone(h.id, viewK);
     const streak = streakForHabit(h.id);
     const li = document.createElement('li');
     li.className = 'habit' + (done ? ' done' : '');
@@ -199,16 +249,24 @@ function renderHistory() {
       dots += `<span class="history-dot${rec[h.id] ? ' on' : ''}" style="--accent:${h.color}; background:${rec[h.id] ? h.color : ''}"></span>`;
     }
     if (state.habits.length === 0) dots = '<span class="history-dot"></span>';
+    const viewing = dateKey(viewingDate) === k;
     html += `
-      <div class="history-day${isToday ? ' today' : ''}">
+      <button type="button" class="history-day${isToday ? ' today' : ''}${viewing ? ' viewing' : ''}" data-date="${k}">
         <div>${days[d.getDay()]}</div>
         <div class="history-dots">${dots}</div>
         <div>${d.getDate()}</div>
-      </div>
+      </button>
     `;
   }
   html += '</div>';
   wrap.innerHTML = html;
+  wrap.querySelectorAll('.history-day').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.date;
+      const [y, m, dd] = k.split('-').map(Number);
+      jumpToDate(new Date(y, m - 1, dd));
+    });
+  });
 }
 
 function attachHabitGestures(el, id) {
@@ -312,6 +370,10 @@ function openEditDialog(id) {
   document.getElementById('editName').value = h.name;
   document.getElementById('editDialog').showModal();
 }
+
+document.getElementById('dateBack').addEventListener('click', () => shiftViewing(-1));
+document.getElementById('dateForward').addEventListener('click', () => shiftViewing(1));
+document.getElementById('dateToday').addEventListener('click', jumpToToday);
 
 document.getElementById('retireCard').addEventListener('click', () => {
   document.getElementById('retireDate').value = state.settings.retirementDate || '';

@@ -57,8 +57,44 @@ html, body {
 .date {
   font-size: 14px;
   color: var(--muted);
-  margin-bottom: 20px;
 }
+
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.date-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.date-nav-btn:active { background: rgba(0,0,0,0.05); }
+.date-nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+.date-today {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin: -8px 0 14px;
+}
+
+.date-today[hidden] { display: none; }
 
 .stats {
   display: grid;
@@ -263,9 +299,18 @@ button.stat-card:active { transform: scale(0.97); }
   gap: 6px;
   font-size: 11px;
   color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 6px 2px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
 }
 
+.history-day:active { background: rgba(0,0,0,0.06); }
 .history-day.today { color: var(--accent); font-weight: 700; }
+.history-day.viewing { background: rgba(233, 138, 62, 0.12); }
 
 .history-dots {
   display: flex;

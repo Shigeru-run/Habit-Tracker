@@ -18,7 +18,12 @@
   <header class="hero">
     <div class="greeting" id="greeting">おはよう ☀️</div>
     <h1 class="title">習慣トラッカー</h1>
-    <div class="date" id="dateLabel"></div>
+    <div class="date-nav">
+      <button type="button" class="date-nav-btn" id="dateBack" aria-label="前日">◀</button>
+      <div class="date" id="dateLabel"></div>
+      <button type="button" class="date-nav-btn" id="dateForward" aria-label="翌日">▶</button>
+    </div>
+    <button type="button" class="date-today" id="dateToday" hidden>今日に戻る</button>
 
     <div class="stats">
       <div class="stat-card streak">
@@ -35,7 +40,7 @@
   </header>
 
   <section class="section">
-    <h2 class="section-title">今日の習慣<span class="section-hint">タップでチェック・長押しで編集</span></h2>
+    <h2 class="section-title" id="habitListTitle">今日の習慣<span class="section-hint">タップでチェック・長押しで編集</span></h2>
     <ul class="habit-list" id="habitList"></ul>
     <button class="add-btn" id="addBtn">＋ 習慣を追加</button>
   </section>
