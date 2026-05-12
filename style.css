@@ -4,18 +4,18 @@
   --card: #ffffff;
   --text: #3d3a35;
   --muted: #8a8378;
-  --accent: #e98a3e;
-  --fire: #ff6b35;
+  --accent: #ff8c1a;
+  --fire: #ff5722;
   --shadow: 0 4px 14px rgba(160, 120, 60, 0.08);
   --radius: 18px;
-  --c-german:   #f4a261;
-  --c-ai:       #7fb069;
-  --c-exercise: #e76f51;
-  --c-mind:     #a08abf;
-  --c-extra-1:  #6db5c9;
-  --c-extra-2:  #d68fa3;
-  --c-extra-3:  #c2a878;
-  --c-extra-4:  #8aaf8c;
+  --c-german:   #ff9933;
+  --c-ai:       #22c55e;
+  --c-exercise: #ef4444;
+  --c-mind:     #3b82f6;
+  --c-extra-1:  #a855f7;
+  --c-extra-2:  #94a3b8;
+  --c-extra-3:  #14b8a6;
+  --c-extra-4:  #ec4899;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -157,6 +157,47 @@ button.stat-card:active { transform: scale(0.97); }
   font-weight: 400;
   letter-spacing: 0;
   opacity: 0.75;
+  width: 100%;
+}
+
+.section-title.with-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.edit-mode-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1.5px solid #d6cab5;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 0;
+}
+
+.edit-mode-btn:active { background: rgba(0,0,0,0.05); }
+
+.edit-mode-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+body.edit-mode .habit-check { opacity: 0.15; }
+body.edit-mode .habit { border-color: var(--accent); border-style: dashed; }
+body.edit-mode .habit::after {
+  content: '✏️';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 14px;
+  opacity: 0.9;
 }
 
 .habit-list {
@@ -359,10 +400,10 @@ button.stat-card:active { transform: scale(0.97); }
 }
 
 .heat-cell.lvl-0 { background: #ece4d3; }
-.heat-cell.lvl-1 { background: #f7d9b2; }
-.heat-cell.lvl-2 { background: #f4a261; }
-.heat-cell.lvl-3 { background: #e76f51; }
-.heat-cell.lvl-4 { background: #c0413a; }
+.heat-cell.lvl-1 { background: #ffe0b3; }
+.heat-cell.lvl-2 { background: #ffb866; }
+.heat-cell.lvl-3 { background: #ff8c1a; }
+.heat-cell.lvl-4 { background: #d96e00; }
 .heat-cell.future { background: transparent; border: 1px dashed #e3dac6; box-sizing: border-box; }
 
 .heat-axis {

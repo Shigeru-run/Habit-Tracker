@@ -6,17 +6,21 @@ const HABIT_COLORS = [
 
 const DEFAULT_STATE = {
   habits: [
-    { id: 'german',   name: 'ドイツ語',         emoji: '🇩🇪', color: 'var(--c-german)' },
-    { id: 'ai',       name: 'AIプログラミング', emoji: '🤖', color: 'var(--c-ai)' },
-    { id: 'exercise', name: '運動（体づくり）', emoji: '💪', color: 'var(--c-exercise)' },
-    { id: 'mind',     name: '心（演じる、自分）', emoji: '🎭', color: 'var(--c-mind)' }
+    { id: 'german',   name: 'ドイツ語',                       emoji: '🇩🇪', color: 'var(--c-german)' },
+    { id: 'ai',       name: 'AIプログラミング',               emoji: '🤖', color: 'var(--c-ai)' },
+    { id: 'exercise', name: '運動（体づくり）',               emoji: '💪', color: 'var(--c-exercise)' },
+    { id: 'mind',     name: '仕事（演じる、敵対しない、自制）', emoji: '💼', color: 'var(--c-mind)' },
+    { id: 'self',     name: '心（自分、生き甲斐、脱生真面目）', emoji: '🌱', color: 'var(--c-extra-1)' },
+    { id: 'blank1',   name: '（あとで追加）',                  emoji: '✨', color: 'var(--c-extra-2)' }
   ],
   records: {},
-  settings: { retirementDate: null }
+  settings: { retirementDate: null },
+  migrations: {}
 };
 
 let state = loadState();
 let editingHabitId = null;
+let editMode = false;
 let viewingDate = startOfToday();
 const MAX_BACKFILL_DAYS = 30;
 
@@ -64,11 +68,31 @@ function loadState() {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.habits) && parsed.records) {
         if (!parsed.settings) parsed.settings = { retirementDate: null };
-        return parsed;
+        if (!parsed.migrations) parsed.migrations = {};
+        return migrate(parsed);
       }
     }
   } catch (e) {}
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function migrate(s) {
+  if (!s.migrations.v2_split_habits) {
+    const mind = s.habits.find(h => h.id === 'mind');
+    if (mind) {
+      mind.name = '仕事（演じる、敵対しない、自制）';
+      mind.emoji = '💼';
+    }
+    if (!s.habits.find(h => h.id === 'self')) {
+      s.habits.push({ id: 'self', name: '心（自分、生き甲斐、脱生真面目）', emoji: '🌱', color: 'var(--c-extra-1)' });
+    }
+    if (!s.habits.find(h => h.id === 'blank1')) {
+      s.habits.push({ id: 'blank1', name: '（あとで追加）', emoji: '✨', color: 'var(--c-extra-2)' });
+    }
+    s.migrations.v2_split_habits = true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  }
+  return s;
 }
 
 function saveState() {
@@ -198,6 +222,9 @@ function render() {
   document.getElementById('dateToday').hidden = isViewingToday();
   document.getElementById('habitListTitle').firstChild.textContent =
     isViewingToday() ? '今日の習慣' : 'この日の記録';
+  document.body.classList.toggle('edit-mode', editMode);
+  document.getElementById('editModeBtn').textContent = editMode ? '完了' : '編集';
+  document.getElementById('editModeBtn').classList.toggle('active', editMode);
 
   document.getElementById('streakValue').textContent = `${overallStreak()}日`;
   const days = daysUntilRetirement();
@@ -218,7 +245,7 @@ function renderHabits() {
     const li = document.createElement('li');
     li.className = 'habit' + (done ? ' done' : '');
     li.style.setProperty('--habit-color', h.color);
-    li.style.setProperty('--habit-bg', `color-mix(in srgb, ${h.color} 18%, transparent)`);
+    li.style.setProperty('--habit-bg', `color-mix(in srgb, ${h.color} 28%, transparent)`);
     li.innerHTML = `
       <div class="habit-emoji">${h.emoji}</div>
       <div class="habit-body">
@@ -270,33 +297,18 @@ function renderHistory() {
 }
 
 function attachHabitGestures(el, id) {
-  let pressTimer = null;
-  let longPressFired = false;
-  const LONG_PRESS_MS = 500;
-
-  const start = (e) => {
-    longPressFired = false;
-    if (pressTimer) clearTimeout(pressTimer);
-    pressTimer = setTimeout(() => {
-      longPressFired = true;
-      pressTimer = null;
-      if (navigator.vibrate) navigator.vibrate(8);
-      openEditDialog(id);
-    }, LONG_PRESS_MS);
-  };
-  const cancel = () => {
-    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-  };
-
-  el.addEventListener('pointerdown', start);
-  el.addEventListener('pointerup', cancel);
-  el.addEventListener('pointerleave', cancel);
-  el.addEventListener('pointercancel', cancel);
-  el.addEventListener('contextmenu', (e) => e.preventDefault());
   el.addEventListener('click', () => {
-    if (longPressFired) { longPressFired = false; return; }
-    toggleHabit(id);
+    if (editMode) {
+      openEditDialog(id);
+    } else {
+      toggleHabit(id);
+    }
   });
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  render();
 }
 
 function renderHeatmap() {
@@ -374,6 +386,7 @@ function openEditDialog(id) {
 document.getElementById('dateBack').addEventListener('click', () => shiftViewing(-1));
 document.getElementById('dateForward').addEventListener('click', () => shiftViewing(1));
 document.getElementById('dateToday').addEventListener('click', jumpToToday);
+document.getElementById('editModeBtn').addEventListener('click', toggleEditMode);
 
 document.getElementById('retireCard').addEventListener('click', () => {
   document.getElementById('retireDate').value = state.settings.retirementDate || '';
