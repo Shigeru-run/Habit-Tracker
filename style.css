@@ -462,6 +462,41 @@ body.edit-mode .habit::after {
   font-size: 14px;
   color: var(--muted);
   font-style: italic;
+  margin-bottom: 20px;
+}
+
+.data-tools {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.data-btn {
+  background: var(--card);
+  border: 1.5px solid #e6dec8;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.data-btn:active { transform: scale(0.97); }
+
+.footer-note {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .data-btn { border-color: #5a4f42; }
 }
 
 .dialog {

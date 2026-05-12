@@ -311,6 +311,54 @@ function toggleEditMode() {
   render();
 }
 
+function exportData() {
+  const payload = {
+    app: 'habit-tracker',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `habit-tracker-backup-${dateKey(new Date())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(e.target.result);
+    } catch (err) {
+      alert('ファイルを読み込めませんでした。形式が正しくありません。');
+      return;
+    }
+    const incoming = parsed && parsed.data ? parsed.data : parsed;
+    if (!incoming || !Array.isArray(incoming.habits) || typeof incoming.records !== 'object') {
+      alert('ファイル形式が習慣トラッカーのものではないようです。');
+      return;
+    }
+    const habitCount = incoming.habits.length;
+    const dayCount = Object.keys(incoming.records).length;
+    if (!confirm(`このファイルを読み込みますか？\n\n習慣: ${habitCount} 件\n記録日数: ${dayCount} 日\n\n※現在のデータは上書きされます。`)) {
+      return;
+    }
+    state = incoming;
+    if (!state.settings) state.settings = { retirementDate: null };
+    if (!state.migrations) state.migrations = {};
+    saveState();
+    render();
+    alert('データを読み込みました。');
+  };
+  reader.readAsText(file);
+}
+
 function renderHeatmap() {
   const container = document.getElementById('heatmap');
   if (!container) return;
@@ -387,6 +435,16 @@ document.getElementById('dateBack').addEventListener('click', () => shiftViewing
 document.getElementById('dateForward').addEventListener('click', () => shiftViewing(1));
 document.getElementById('dateToday').addEventListener('click', jumpToToday);
 document.getElementById('editModeBtn').addEventListener('click', toggleEditMode);
+
+document.getElementById('exportBtn').addEventListener('click', exportData);
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) importData(file);
+  e.target.value = '';
+});
 
 document.getElementById('retireCard').addEventListener('click', () => {
   document.getElementById('retireDate').value = state.settings.retirementDate || '';
